@@ -11,6 +11,7 @@ public class Main {
                     "2. Multiply matrix by a constant\n" +
                     "3. Multiply matrices\n" +
                     "4. Transpose matrix\n" +
+                    "5. Calculate a determinant\n" +
                     "0. Exit");
             Scanner scanner = new Scanner(System.in);
             int choice = scanner.nextInt();
@@ -45,6 +46,11 @@ public class Main {
                     break;
                 case 4:
                     selectTransposeMode();
+                    break;
+                case 5:
+                    matrixA = fillMatrixA();
+                    int n = matrixA.length;
+                    System.out.println(getDeterminant(matrixA, n));
                     break;
                 default:
                     System.out.println("Please choose correct function.");
@@ -180,9 +186,9 @@ public class Main {
     }
 
     public static void transposeVertical(double[][] matrixA) {
-        for (int i = 0; i < matrixA.length; i++) {
+        for (double[] doubles : matrixA) {
             for (int j = matrixA[0].length - 1; j >= 0; j--) {  // vertical axis 0,0 becomes 0,3 and vice versa
-                System.out.println(matrixA[i][j] + " ");
+                System.out.println(doubles[j] + " ");
             }
             System.out.println();
         }
@@ -197,4 +203,55 @@ public class Main {
         }
     }
 
+    // Function to get cofactor of matrix[p][q] in minor[][]. n is
+    // current dimension of matrix[][]
+    static void getCofactor(double[][] matrix, double[][] minor, int p, int q, int n) {
+        int i = 0, j = 0;
+
+        // Looping for each element of  the matrix
+        for (int row = 0; row < n; row++) {
+            for (int col = 0; col < n; col++) {
+                // Copying into temporary matrix
+                // only those element which are
+                // not in given row and column
+                if (row != p && col != q) {
+                    minor[i][j++] = matrix[row][col];
+                    // Row is filled, so increase
+                    // row index and reset col index
+                    if (j == n - 1) {
+                        j = 0;
+                        i++;
+                    }
+                }
+            }
+        }
+    }
+
+    /* Recursive function for finding determinant
+    of matrix. n is current dimension of matrix[][]. */
+    static double getDeterminant(double[][] matrix, int n) {
+        double D = 0; // Initialize result
+
+        // Base case : if matrix contains single element
+        if (n == 1)
+            return matrix[0][0];
+
+        // To store cofactors
+        double[][] minor = new double[n][n];
+
+        // To store sign multiplier
+        int sign = 1;
+
+        // Iterate for each element of first row
+        for (int f = 0; f < n; f++) {
+            double element = matrix[0][f];
+            // Getting Cofactor of matrix[0][f]
+            getCofactor(matrix, minor, 0, f, n);
+            D += sign * element * getDeterminant(minor, n - 1);
+
+            // terms are to be added with alternate sign
+            sign = -sign;
+        }
+        return D;
+    }
 }
