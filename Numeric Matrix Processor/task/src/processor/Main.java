@@ -12,6 +12,8 @@ public class Main {
                     "3. Multiply matrices\n" +
                     "4. Transpose matrix\n" +
                     "5. Calculate a determinant\n" +
+                    "6. Inverse matrix\n" +
+                    "7. Calculate cofactors\n" +
                     "0. Exit");
             Scanner scanner = new Scanner(System.in);
             int choice = scanner.nextInt();
@@ -25,14 +27,14 @@ public class Main {
                     if (isAddingPossible(matrixA, matrixB)) {
                         addMatrices(matrixA, matrixB);
                     } else {
-                        System.out.println("Error");
+                        System.out.println("Error, addition not possible");
                         return;
                     }
                     break;
                 case 2:
                     matrixA = fillMatrixA();
-                    int constant = scanner.nextInt();
-                    multiplyMatrix(matrixA, constant);
+                    double constant = scanner.nextInt();
+                    printMatrix(multiplyMatrix(matrixA, constant));
                     break;
                 case 3:
                     matrixA = fillMatrixA();
@@ -40,7 +42,7 @@ public class Main {
                     if (isMatrixValid(matrixA, matrixB)) {
                         multiplyMatrix(matrixA, matrixB);
                     } else {
-                        System.out.println("Error");
+                        System.out.println("Error, multiplication not possible.");
                         return;
                     }
                     break;
@@ -52,6 +54,25 @@ public class Main {
                     int n = matrixA.length;
                     System.out.println(getDeterminant(matrixA, n));
                     break;
+                case 6:
+                    matrixA = fillMatrixA();
+                    n = matrixA.length;
+                    if (getDeterminant(matrixA, n) != 0) { // required to inverse matrix
+                        double determinant = getDeterminant(matrixA, n);
+                        coFactors = new double[matrixA.length][matrixA.length];
+                        printMatrix(inverseMatrix(matrixA, determinant));
+                    } else {
+                        System.out.println("Error, inverse not possible.");
+                        return;
+                    }
+                    break;
+                case 7:
+                    matrixA = fillMatrixA();
+                    coFactors = new double[matrixA.length][matrixA.length];
+                    n = coFactors.length;
+                    getCoFactorMatrix(matrixA, n);
+                    printMatrix(coFactors);
+                    break;
                 default:
                     System.out.println("Please choose correct function.");
 
@@ -61,8 +82,9 @@ public class Main {
 
     public static boolean isAddingPossible(double[][] matrixA, double[][] matrixB) {
         return matrixA.length == matrixB.length && matrixA[0].length == matrixB[0].length;
-        // matrixA[0].lenght its eqal to "j" value in matrixA[i][j], size of columns
+        // matrixA[0].length its equal to "j" value in matrixA[i][j], size of columns
     }
+
 
     public static boolean isMatrixValid(double[][] matrixA, double[][] matrixB) {
         return matrixA[0].length == matrixB.length;
@@ -81,7 +103,7 @@ public class Main {
 
             case 1:
                 double[][] matrixA = fillMatrixA();
-                transposeMainDiagonal(matrixA);
+                printMatrix(transposeMainDiagonal(matrixA));
                 break;
             case 2:
                 matrixA = fillMatrixA();
@@ -95,8 +117,11 @@ public class Main {
                 matrixA = fillMatrixA();
                 transposeHorizontal(matrixA);
                 break;
+
         }
     }
+
+    public static double[][] coFactors;
 
     public static double[][] fillMatrixA() {
         Scanner scanner = new Scanner(System.in);
@@ -137,14 +162,14 @@ public class Main {
         }
     }
 
-    public static void multiplyMatrix(double[][] matrixA, int constant) {
-        for (double[] doubles : matrixA) {
+    public static double[][] multiplyMatrix(double[][] matrixA, double constant) {
+        double[][] result = new double[matrixA.length][matrixA.length];
+        for (int i = 0; i < matrixA.length; i++) {
             for (int j = 0; j < matrixA[0].length; j++) {
-                System.out.print(doubles[j] * constant + " ");
+                result[i][j] = matrixA[i][j] * constant;
             }
-            System.out.println();
         }
-
+        return result;
     }
 
     public static void multiplyMatrix(double[][] matrixA, double[][] matrixB) {
@@ -167,13 +192,14 @@ public class Main {
 
     }
 
-    public static void transposeMainDiagonal(double[][] matrixA) {  // axis from left upper corner
+    public static double[][] transposeMainDiagonal(double[][] matrixA) {  // axis from left upper corner
+        double[][] result = new double[matrixA.length][matrixA.length];
         for (int i = 0; i < matrixA.length; i++) {
             for (int j = 0; j < matrixA[0].length; j++) {
-                System.out.println(matrixA[j][i] + " ");
+                result[i][j] = matrixA[j][i];
             }
-            System.out.println();
         }
+        return result;
     }
 
     public static void transposeSideDiagonal(double[][] matrixA) { // axis from right upper corner
@@ -203,21 +229,32 @@ public class Main {
         }
     }
 
-    // Function to get cofactor of matrix[p][q] in minor[][]. n is
-    // current dimension of matrix[][]
-    static void getCofactor(double[][] matrix, double[][] minor, int p, int q, int n) {
+    public static double[][] inverseMatrix(double[][] matrixA, double determinant) {
+        // to inverse: find 1/|A| * adj(A), so 1/determinant(A) * transposedMD matrix from cofactors of matrixA
+        int n = matrixA.length;
+        getCoFactorMatrix(matrixA, n);
+        double[][] adj = transposeMainDiagonal(coFactors);// adj(A) =  C(matrix of cofactors) T(transosed)
+        return multiplyMatrix(adj, 1 / determinant);
+    }
+
+    // Function to get cofactor of
+    // matrix[p][q] in temp[][]. n is
+    // current dimension of mat[][]
+    static void getCofactor(double matrix[][], double temp[][], int p, int q, int n) {
         int i = 0, j = 0;
 
-        // Looping for each element of  the matrix
+        // Looping for each element of
+        // the matrix
         for (int row = 0; row < n; row++) {
             for (int col = 0; col < n; col++) {
                 // Copying into temporary matrix
                 // only those element which are
                 // not in given row and column
                 if (row != p && col != q) {
-                    minor[i][j++] = matrix[row][col];
+                    temp[i][j++] = matrix[row][col];
                     // Row is filled, so increase
-                    // row index and reset col index
+                    // row index and reset col
+                    // index
                     if (j == n - 1) {
                         j = 0;
                         i++;
@@ -228,30 +265,65 @@ public class Main {
     }
 
     /* Recursive function for finding determinant
-    of matrix. n is current dimension of matrix[][]. */
+    of matrix. n is current dimension of mat[][]. */
     static double getDeterminant(double[][] matrix, int n) {
         double D = 0; // Initialize result
 
-        // Base case : if matrix contains single element
+        // Base case : if matrix contains single
+        // element
         if (n == 1)
             return matrix[0][0];
 
         // To store cofactors
-        double[][] minor = new double[n][n];
+        double[][] temp = new double[n][n];
 
         // To store sign multiplier
         int sign = 1;
 
         // Iterate for each element of first row
         for (int f = 0; f < n; f++) {
-            double element = matrix[0][f];
             // Getting Cofactor of matrix[0][f]
-            getCofactor(matrix, minor, 0, f, n);
-            D += sign * element * getDeterminant(minor, n - 1);
+            getCofactor(matrix, temp, 0, f, n);
+            D += sign * matrix[0][f] * getDeterminant(temp, n - 1);
 
-            // terms are to be added with alternate sign
+            // terms are to be added with
+            // alternate sign
             sign = -sign;
         }
         return D;
+    }
+
+    // Function to get cofactors of matrix[N][N] in coFactor[N][N].
+    static void getCoFactorMatrix(double matrix[][], int n) {
+        if (n == 1) {
+            matrix[0][0] = 1;
+            return;
+        }
+        // temp is used to store cofactors of A[][]
+        int sign = 1;
+        double[][] temp = new double[n][n];
+
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                // Get cofactor of matrix[i][j]
+                getCofactor(matrix, temp, i, j, n);
+                // sign of coFactors[j][i] positive if sum of row
+                // and column indexes is even.
+                sign = ((i + j) % 2 == 0) ? 1 : -1;
+
+                // Interchanging rows and columns to get the
+                // transpose of the cofactor matrix
+                coFactors[i][j] = (sign) * (getDeterminant(temp, n - 1));
+            }
+        }
+    }
+
+    public static void printMatrix(double[][] matrix) {
+        for (double[] values : matrix) {
+            for (int j = 0; j < matrix[0].length; j++) {
+                System.out.print(values[j] + " ");
+            }
+            System.out.println();
+        }
     }
 }
